@@ -4,12 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "node --loader ts-node/esm --experimental-specifier-resolution=node src/index.ts"
+    "dev": "node dist/index.js",
+    "tsc": "tsc"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
+  "type": "commonjs",
   "dependencies": {
     "@prisma/client": "^6.6.0",
     "@types/firebase": "^2.4.32",
@@ -18,12 +19,14 @@
     "express": "^5.1.0",
     "firebase": "^11.6.0",
     "firebase-admin": "^13.3.0",
+    "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.2",
     "prisma": "^6.6.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
+    "@types/morgan": "^1.9.9",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.14.1",
     "ts-node": "^10.9.2",
