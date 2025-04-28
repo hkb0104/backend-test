@@ -2,12 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import routes from './routes';
-import { PrismaClient } from '@prisma/client';
 
 dotenv.config();
 
 const app = express();
-const prisma = new PrismaClient();
+
 const PORT = process.env.PORT || 3000;
 
 // Middleware
@@ -26,7 +25,6 @@ app.get('/health', (req, res) => {
 const startServer = async () => {
   try {
     // Connect to Prisma
-    await prisma.$connect();
     console.log('Connected to database');
     
     // Start server
@@ -35,7 +33,6 @@ const startServer = async () => {
     });
   } catch (error) {
     console.error('Error starting server:', error);
-    await prisma.$disconnect();
     process.exit(1);
   }
 };
