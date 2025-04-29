@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { User } from '../types';
+import { AuthRequest } from '../middleware/authMiddleware'; 
 
 // Register a new user
 export const register = async (req: Request, res: Response): Promise<void> => {

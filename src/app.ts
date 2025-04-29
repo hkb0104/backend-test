@@ -10,13 +10,18 @@ dotenv.config();
 
 const app = express();
 
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    next();
+  });
+
 // Middleware
 app.use(express.json());
 app.use(cors());
 app.use(morgan('dev'));
 
 // Routes
-app.use('/api/auth', authRoutes);
+app.use('/api', authRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {

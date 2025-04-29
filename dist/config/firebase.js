@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.auth = void 0;
+exports.db = exports.auth = void 0;
 // Import the functions you need from the SDKs you need
 const app_1 = require("firebase/app");
 const auth_1 = require("firebase/auth");
+const firestore_1 = require("firebase/firestore");
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 // Your web app's Firebase configuration
@@ -20,6 +21,8 @@ const firebaseConfig = {
 // Initialize Firebase
 // const app = initializeApp(firebaseConfig);
 const app = (0, app_1.initializeApp)(firebaseConfig);
+const db = (0, firestore_1.getFirestore)(app);
+exports.db = db;
 const auth = (0, auth_1.getAuth)(app);
 exports.auth = auth;
 exports.default = app;
