@@ -4,26 +4,42 @@ exports.logout = exports.getCurrentUser = exports.login = exports.register = voi
 const responseHandler_1 = require("../utils/responseHandler");
 const firebase_1 = require("../config/firebase");
 const auth_1 = require("firebase/auth");
+const firestore_1 = require("firebase/firestore");
 // Register a new user
 const register = async (req, res) => {
     try {
-        const { email, password } = req.body;
-        if (!email || !password) {
-            (0, responseHandler_1.sendError)(res, 'Email and password are required', 400);
+        const { email, password, username, is_admin = false } = req.body;
+        if (!email || !password || !username) {
+            (0, responseHandler_1.sendError)(res, 'Email, password, and username are required', 400);
             return;
         }
         // Create user in Firebase Auth
         const userCredential = await (0, auth_1.createUserWithEmailAndPassword)(firebase_1.auth, email, password);
-        const user = userCredential.user;
-        // Return user data
+        const firebaseUser = userCredential.user;
+        // Store user data in Firestore
         const userData = {
-            uid: user.uid,
-            email: user.email
+            id: firebaseUser.uid,
+            email,
+            username,
+            is_admin,
+            createdAt: new Date(),
+            updatedAt: new Date(),
         };
-        (0, responseHandler_1.sendSuccess)(res, userData, 'User registered successfully', 201);
+        await (0, firestore_1.setDoc)((0, firestore_1.doc)(firebase_1.db, 'users', firebaseUser.uid), userData);
+        // Get Firebase ID token
+        const idToken = await firebaseUser.getIdToken();
+        // Return user data (exclude password)
+        const responseData = {
+            id: userData.id,
+            email: userData.email,
+            username: userData.username,
+            is_admin: userData.is_admin,
+            createdAt: userData.createdAt,
+            updatedAt: userData.updatedAt,
+        };
+        (0, responseHandler_1.sendSuccess)(res, { user: responseData, idToken }, 'User registered successfully', 201);
     }
     catch (error) {
-        // Handle common Firebase Auth errors
         if (error.code === 'auth/email-already-in-use') {
             (0, responseHandler_1.sendError)(res, 'Email already in use', 400);
             return;
@@ -50,16 +66,28 @@ const login = async (req, res) => {
         }
         // Sign in with Firebase Auth
         const userCredential = await (0, auth_1.signInWithEmailAndPassword)(firebase_1.auth, email, password);
-        const user = userCredential.user;
-        // Return user data
-        const userData = {
-            uid: user.uid,
-            email: user.email
+        const firebaseUser = userCredential.user;
+        // Fetch user data from Firestore
+        const userDoc = await (0, firestore_1.getDoc)((0, firestore_1.doc)(firebase_1.db, 'users', firebaseUser.uid));
+        if (!userDoc.exists()) {
+            (0, responseHandler_1.sendError)(res, 'User not found in database', 404);
+            return;
+        }
+        const userData = userDoc.data();
+        // Get Firebase ID token
+        const idToken = await firebaseUser.getIdToken();
+        // Return user data (exclude password)
+        const responseData = {
+            id: userData.id,
+            email: userData.email,
+            username: userData.username,
+            is_admin: userData.is_admin,
+            createdAt: userData.createdAt,
+            updatedAt: userData.updatedAt,
         };
-        (0, responseHandler_1.sendSuccess)(res, userData, 'User logged in successfully');
+        (0, responseHandler_1.sendSuccess)(res, { user: responseData, idToken }, 'User logged in successfully');
     }
     catch (error) {
-        // Handle common Firebase Auth errors
         if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
             (0, responseHandler_1.sendError)(res, 'Invalid email or password', 401);
             return;
@@ -75,16 +103,28 @@ exports.login = login;
 // Get current user data
 const getCurrentUser = async (req, res) => {
     try {
-        const user = firebase_1.auth.currentUser;
+        const user = req.user; // From authenticateUser middleware
         if (!user) {
             (0, responseHandler_1.sendError)(res, 'No user is signed in', 401);
             return;
         }
-        const userData = {
-            uid: user.uid,
-            email: user.email
+        // Fetch user data from Firestore
+        const userDoc = await (0, firestore_1.getDoc)((0, firestore_1.doc)(firebase_1.db, 'users', user.uid));
+        if (!userDoc.exists()) {
+            (0, responseHandler_1.sendError)(res, 'User not found in database', 404);
+            return;
+        }
+        const userData = userDoc.data();
+        // Return user data (exclude password)
+        const responseData = {
+            id: userData.id,
+            email: userData.email,
+            username: userData.username,
+            is_admin: userData.is_admin,
+            createdAt: userData.createdAt,
+            updatedAt: userData.updatedAt,
         };
-        (0, responseHandler_1.sendSuccess)(res, userData, 'User data retrieved successfully');
+        (0, responseHandler_1.sendSuccess)(res, responseData, 'User data retrieved successfully');
     }
     catch (error) {
         (0, responseHandler_1.sendError)(res, 'Failed to get user data', 500, error);
