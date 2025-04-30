@@ -17,22 +17,14 @@ import { AuthRequest } from '../middleware/authMiddleware';
 // Save a new model
 export const saveModel = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    console.log('📥 Incoming saveModel request:', {
-      path: req.path,
-      body: req.body,
-      user: req.user
-    });
-
     const user = req.user;
     if (!user) {
-      console.error('❌ No authenticated user');
-      sendError(res, 'No user is signed in', 401);
+      sendError(res, 'No authenticated user', 401);
       return;
     }
     
     const { entities, name, description } = req.body as Partial<Model>;
     if (!entities || !name) {
-      console.error('❌ Missing required fields:', { entities, name });
       sendError(res, 'Entities and name are required', 400);
       return;
     }
@@ -50,11 +42,8 @@ export const saveModel = async (req: AuthRequest, res: Response): Promise<void> 
     };
     
     await setDoc(modelRef, modelData);
-    console.log(`✅ Model saved successfully (ID: ${modelRef.id})`);
-    
     sendSuccess(res, modelData, 'Model saved successfully', 201);
   } catch (error) {
-    console.error('🚨 Error saving model:', error);
     sendError(res, 'Failed to save model', 500, error);
   }
 };
@@ -62,14 +51,8 @@ export const saveModel = async (req: AuthRequest, res: Response): Promise<void> 
 // Get all models
 export const getModels = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    console.log('📥 Incoming getModels request:', {
-      path: req.path,
-      user: req.user
-    });
-
     const user = req.user;
     if (!user) {
-      console.error('❌ No authenticated user');
       sendError(res, 'Authentication required', 401);
       return;
     }
@@ -79,12 +62,6 @@ export const getModels = async (req: AuthRequest, res: Response): Promise<void> 
     const q = query(modelsRef);
     const snapshot: QuerySnapshot<DocumentData> = await getDocs(q);
     
-    if (snapshot.empty) {
-      console.log('📭 No models found');
-      sendSuccess(res, [], 'No models available', 200);
-      return;
-    }
-
     // Convert docs to model objects
     const models: Model[] = [];
     snapshot.forEach(doc => {
@@ -94,10 +71,8 @@ export const getModels = async (req: AuthRequest, res: Response): Promise<void> 
       } as Model);
     });
 
-    console.log(`📊 Found ${models.length} models`);
     sendSuccess(res, models, `Found ${models.length} models`, 200);
   } catch (error) {
-    console.error('🚨 Error fetching models:', error);
     sendError(res, 'Failed to fetch models', 500, error);
   }
 };

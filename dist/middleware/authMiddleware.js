@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.authenticateUser = void 0;
 const responseHandler_1 = require("../utils/responseHandler");
 const auth_1 = require("firebase-admin/auth");
-// Middleware to authenticate user
 const authenticateUser = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
@@ -16,19 +15,19 @@ const authenticateUser = async (req, res, next) => {
             (0, responseHandler_1.sendError)(res, 'Invalid token format', 401);
             return;
         }
-        try {
-            // Use Firebase Admin SDK for token verification
-            const decodedToken = await (0, auth_1.getAuth)().verifyIdToken(token);
-            req.user = decodedToken;
+        // DEV: Skip verification in emulator mode
+        if (process.env.NODE_ENV === 'development') {
+            req.user = { uid: 'dev-user-id' };
             next();
-        }
-        catch (error) {
-            (0, responseHandler_1.sendError)(res, 'Invalid or expired token', 401);
             return;
         }
+        // PROD: Verify Firebase ID token
+        const decodedToken = await (0, auth_1.getAuth)().verifyIdToken(token);
+        req.user = { uid: decodedToken.uid };
+        next();
     }
     catch (error) {
-        (0, responseHandler_1.sendError)(res, 'Authentication failed', 500, error);
+        (0, responseHandler_1.sendError)(res, 'Invalid or expired token', 401);
     }
 };
 exports.authenticateUser = authenticateUser;
